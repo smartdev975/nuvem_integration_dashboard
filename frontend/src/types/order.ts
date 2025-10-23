@@ -3,7 +3,7 @@ export interface Order {
   number: number;
   customer_name: string;
   order_date: string;
-  status: "ready_to_pack" | "sent" | "cancelled";
+  status: "open" | "ready_to_pack" | "sent" | "cancelled";
   days_in_ready_to_pack: number;
   is_delayed: boolean;
   note: string | null;

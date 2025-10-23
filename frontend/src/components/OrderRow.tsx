@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertCircle, Save, Star, Trash2, X } from "lucide-react";
 import { Order } from "@/types/order";
-import { calculateDaysInDelay, isOrderDelayed } from "@/utils/orderUtils";
+import { calculateDaysInDelay, isOrderDelayed, isOrderOverdue, calculateOverdueDays } from "@/utils/orderUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,8 @@ export const OrderRow = ({ order, onUpdateNote, onDeleteNote, onToggleAttention 
   const [noteValue, setNoteValue] = useState(order.note || '');
   const daysDelayed = order.days_in_ready_to_pack;
   const isDelayed = order.is_delayed;
+  const isOverdue = isOrderOverdue(order);
+  const overdueDays = calculateOverdueDays(order);
   const { t } = useTranslation();
 
   const handleSaveNote = () => {
@@ -49,12 +51,13 @@ export const OrderRow = ({ order, onUpdateNote, onDeleteNote, onToggleAttention 
     <tr
       className={cn(
         "border-b border-border hover:bg-accent/50 transition-colors",
-        isDelayed && "bg-warning-light"
+        isOverdue && "bg-red-50 border-red-200 hover:bg-red-100",
+        !isOverdue && isDelayed && "bg-warning-light"
       )}
     >
       <td className="px-3 py-4">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-foreground">{order.number}</span>
+          <span className="font-medium text-foreground">#{order.number}</span>
           {order.attention && (
             <Star className="h-4 w-4 fill-warning text-warning flex-shrink-0" />
           )}
@@ -67,7 +70,12 @@ export const OrderRow = ({ order, onUpdateNote, onDeleteNote, onToggleAttention 
         {formatDate(order.order_date)}
       </td>
       <td className="px-3 py-4 text-center">
-        {isDelayed ? (
+        {isOverdue ? (
+          <div className="flex items-center justify-center gap-1">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <span className="font-medium text-red-600 text-xs">{overdueDays}d</span>
+          </div>
+        ) : isDelayed ? (
           <div className="flex items-center justify-center gap-1">
             <AlertCircle className="h-4 w-4 text-warning" />
             <span className="font-medium text-warning text-xs">{daysDelayed}d</span>

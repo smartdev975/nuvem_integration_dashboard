@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Order } from "@/types/order";
-import { filterOrders, getOrderStats } from "@/utils/orderUtils";
+import { filterOrders, getOrderStats, sortOrders } from "@/utils/orderUtils";
 import { SummaryBar } from "@/components/SummaryBar";
 import { FilterBar } from "@/components/FilterBar";
 import { OrderTable } from "@/components/OrderTable";
@@ -173,8 +173,8 @@ const Index = () => {
 
   // Calculate filtered orders
   const filteredOrders = activeTab === "attention"
-    ? orders.filter((o) => o.attention)
-    : filterOrders(orders, searchTerm, statusFilter, overdueOnly);
+    ? sortOrders(orders.filter((o) => o.attention))
+    : sortOrders(filterOrders(orders, searchTerm, statusFilter, overdueOnly));
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useTranslation } from 'react-i18next';
+import { isOrderOverdue, calculateOverdueDays } from "@/utils/orderUtils";
 
 interface OrderCardProps {
   order: Order;
@@ -20,6 +21,8 @@ export const OrderCard = ({ order, onUpdateNote, onDeleteNote, onToggleAttention
   const [noteValue, setNoteValue] = useState(order.note || '');
   const daysDelayed = order.days_in_ready_to_pack;
   const isDelayed = order.is_delayed;
+  const isOverdue = isOrderOverdue(order);
+  const overdueDays = calculateOverdueDays(order);
   const { t } = useTranslation();
 
   const handleSaveNote = () => {
@@ -48,7 +51,8 @@ export const OrderCard = ({ order, onUpdateNote, onDeleteNote, onToggleAttention
   return (
     <Card className={cn(
       "border-border hover:shadow-md transition-shadow",
-      isDelayed && "border-warning bg-warning/5"
+      isOverdue && "border-red-200 bg-red-50",
+      !isOverdue && isDelayed && "border-warning bg-warning/5"
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -106,14 +110,22 @@ export const OrderCard = ({ order, onUpdateNote, onDeleteNote, onToggleAttention
         </div>
 
         {/* Days Delayed */}
-        {isDelayed && (
+        {(isOverdue || isDelayed) && (
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {t('orders.daysDelayed')}
             </label>
             <div className="flex items-center gap-1 mt-1">
-              <AlertCircle className="h-4 w-4 text-warning" />
-              <span className="font-medium text-warning text-sm">{daysDelayed} days</span>
+              <AlertCircle className={cn(
+                "h-4 w-4",
+                isOverdue ? "text-red-500" : "text-warning"
+              )} />
+              <span className={cn(
+                "font-medium text-sm",
+                isOverdue ? "text-red-600" : "text-warning"
+              )}>
+                {isOverdue ? `${overdueDays} days` : `${daysDelayed} days`}
+              </span>
             </div>
           </div>
         )}
