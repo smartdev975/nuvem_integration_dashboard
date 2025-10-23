@@ -54,7 +54,7 @@ export const OrderRow = ({ order, onUpdateNote, onDeleteNote, onToggleAttention 
     >
       <td className="px-3 py-4">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-foreground">{order.id}</span>
+          <span className="font-medium text-foreground">{order.number}</span>
           {order.attention && (
             <Star className="h-4 w-4 fill-warning text-warning flex-shrink-0" />
           )}

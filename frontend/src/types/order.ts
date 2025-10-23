@@ -1,5 +1,6 @@
 export interface Order {
   id: string | number;
+  number: number;
   customer_name: string;
   order_date: string;
   status: "ready_to_pack" | "sent" | "cancelled";
