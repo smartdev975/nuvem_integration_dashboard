@@ -160,5 +160,14 @@
     "sent": "Sent",
     "delivered": "Delivered",
     "cancelled": "Cancelled"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "showing": "Showing",
+    "of": "of",
+    "orders": "orders",
+    "goToPage": "Go to page",
+    "page": "Page"
   }
 }

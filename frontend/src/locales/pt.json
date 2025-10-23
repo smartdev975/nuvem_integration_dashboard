@@ -160,5 +160,14 @@
     "sent": "Enviado",
     "delivered": "Entregue",
     "cancelled": "Cancelado"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Próximo",
+    "showing": "Mostrando",
+    "of": "de",
+    "orders": "pedidos",
+    "goToPage": "Ir para página",
+    "page": "Página"
   }
 }
