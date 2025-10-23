@@ -1,0 +1,262 @@
+import { useState, useEffect } from "react";
+import { Order } from "@/types/order";
+import { filterOrders, getOrderStats } from "@/utils/orderUtils";
+import { SummaryBar } from "@/components/SummaryBar";
+import { FilterBar } from "@/components/FilterBar";
+import { OrderTable } from "@/components/OrderTable";
+import UserProfile from "@/components/UserProfile";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from 'react-i18next';
+
+const Index = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const stats = getOrderStats(orders);
+
+  // Fetch orders from backend
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Fetching orders from backend...');
+      
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      console.log('Orders fetched successfully:', data);
+      
+      if (data.success && data.data) {
+        setOrders(data.data);
+        toast.success(t('notifications.orderUpdated'));
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error(t('errors.networkError'));
+      // Fallback to mock data if backend is not available
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateNote = async (orderId: string, note: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/orders/${orderId}/note`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ note })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save note');
+      }
+
+      // Update local state
+      setOrders((prev) =>
+        prev.map((order) =>
+          String(order.id) === orderId ? { ...order, note } : order
+        )
+      );
+      toast.success(t('notifications.noteSaved'));
+    } catch (error) {
+      console.error('Error saving note:', error);
+      toast.error(t('errors.networkError'));
+    }
+  };
+
+  const handleDeleteNote = async (orderId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/orders/${orderId}/note`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete note');
+      }
+
+      // Update local state
+      setOrders((prev) =>
+        prev.map((order) =>
+          String(order.id) === orderId ? { ...order, note: null } : order
+        )
+      );
+      toast.success(t('notifications.noteDeleted'));
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast.error(t('errors.networkError'));
+    }
+  };
+
+  const handleToggleAttention = async (orderId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const order = orders.find((o) => String(o.id) === orderId);
+      const newAttentionState = !order?.attention;
+      
+      const response = await fetch(`/api/orders/${orderId}/note`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          note: order?.note || '', 
+          attention: newAttentionState 
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update attention status');
+      }
+
+      // Update local state
+      setOrders((prev) =>
+        prev.map((order) =>
+          String(order.id) === orderId
+            ? { ...order, attention: newAttentionState }
+            : order
+        )
+      );
+      
+      toast.success(t('notifications.attentionToggled'));
+    } catch (error) {
+      console.error('Error updating attention:', error);
+      toast.error(t('errors.networkError'));
+    }
+  };
+
+  const handleRefresh = async () => {
+    await fetchOrders();
+  };
+
+  const displayedOrders =
+    activeTab === "attention"
+      ? orders.filter((o) => o.attention)
+      : filterOrders(orders, searchTerm, statusFilter, overdueOnly);
+
+  useEffect(() => {
+    // Fetch orders on component mount
+    fetchOrders();
+
+    // Auto-refresh every 15 minutes
+    const interval = setInterval(() => {
+      console.log("Auto-refreshing data...");
+      fetchOrders();
+    }, 15 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{t('dashboard.loadingOrders')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <header className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                {t('dashboard.title')}
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                {t('dashboard.subtitle')}
+              </p>
+              {user && (
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                  Welcome back, {user.name}!
+                </p>
+              )}
+            </div>
+            <div className="flex-shrink-0 flex items-center gap-3">
+              <LanguageSwitcher />
+              <UserProfile />
+            </div>
+          </div>
+        </header>
+
+        <SummaryBar stats={stats} />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList>
+            <TabsTrigger value="all">{t('dashboard.totalOrders')}</TabsTrigger>
+            <TabsTrigger value="attention" className="gap-2">
+              {t('dashboard.attentionOrders')}
+              {orders.filter((o) => o.attention).length > 0 && (
+                <span className="bg-warning text-warning-foreground text-xs px-2 py-0.5 rounded-full">
+                  {orders.filter((o) => o.attention).length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-6">
+            <FilterBar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              overdueOnly={overdueOnly}
+              onOverdueOnlyChange={setOverdueOnly}
+              onRefresh={handleRefresh}
+            />
+            <OrderTable
+              orders={displayedOrders}
+              onUpdateNote={handleUpdateNote}
+              onDeleteNote={handleDeleteNote}
+              onToggleAttention={handleToggleAttention}
+            />
+          </TabsContent>
+
+          <TabsContent value="attention" className="mt-6">
+            <OrderTable
+              orders={displayedOrders}
+              onUpdateNote={handleUpdateNote}
+              onDeleteNote={handleDeleteNote}
+              onToggleAttention={handleToggleAttention}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Index;
