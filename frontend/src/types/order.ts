@@ -20,6 +20,9 @@ export interface Order {
 }
 
 export interface OrderStats {
+  totalOrders: number;
+  totalUnpacked: number;
+  totalUnshipped: number;
   totalReadyToPack: number;
   totalSent: number;
   totalDelayed: number;

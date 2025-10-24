@@ -67,6 +67,7 @@
     "attentionOrders": "Pedidos que Precisam de Atenção",
     "recentOrders": "Pedidos Recentes",
     "searchPlaceholder": "Pesquisar por ID do pedido ou nome do cliente...",
+    "search": "Pesquisar",
     "filterByStatus": "Filtrar por Status",
     "showOverdueOnly": "Mostrar Apenas Atrasados",
     "noOrdersFound": "Nenhum pedido encontrado",
@@ -156,7 +157,7 @@
   },
   "status": {
     "unpacked": "Não Embalado",
-    "unshipped": "Não Enviado",
+    "unshipped": "Pronto para Embalar",
     "shipped": "Enviado"
   },
   "pagination": {

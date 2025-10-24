@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 interface FilterBarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
+  onSearch: () => void;
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
   overdueOnly: boolean;
@@ -24,6 +25,7 @@ interface FilterBarProps {
 export const FilterBar = ({
   searchTerm,
   onSearchChange,
+  onSearch,
   statusFilter,
   onStatusFilterChange,
   overdueOnly,
@@ -34,14 +36,25 @@ export const FilterBar = ({
 
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t('dashboard.searchPlaceholder')}
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex gap-2 flex-1">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('dashboard.searchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onSearch();
+              }
+            }}
+            className="pl-10"
+          />
+        </div>
+        <Button onClick={onSearch} variant="outline" className="gap-2">
+          <Search className="h-4 w-4" />
+          {t('dashboard.search')}
+        </Button>
       </div>
 
       <Select value={statusFilter} onValueChange={onStatusFilterChange}>

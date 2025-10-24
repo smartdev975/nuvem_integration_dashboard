@@ -283,6 +283,107 @@ class FirestoreService {
       };
     }
   }
+  /**
+   * Save order counts to Firebase
+   */
+  async saveOrderCounts(counts) {
+    try {
+      this.initialize();
+
+      if (!this.isAvailable()) {
+        console.warn('Firestore not available - cannot save order counts');
+        return {
+          success: false,
+          message: 'Firestore not available',
+          fallback: true
+        };
+      }
+
+      const countsRef = this.db.collection('order_counts').doc('current');
+      await countsRef.set({
+        unshipped: counts.unshipped,
+        shipped: counts.shipped,
+        timestamp: new Date().toISOString(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      console.log(`Order counts saved to Firebase: Unshipped: ${counts.unshipped}, Shipped: ${counts.shipped}`);
+      
+      return {
+        success: true,
+        message: 'Order counts saved successfully'
+      };
+
+    } catch (error) {
+      console.error('Error saving order counts:', error.message);
+      return {
+        success: false,
+        message: error.message,
+        fallback: true
+      };
+    }
+  }
+
+  /**
+   * Get order counts from Firebase
+   */
+  async getOrderCounts() {
+    try {
+      this.initialize();
+
+      if (!this.isAvailable()) {
+        console.warn('Firestore not available - cannot get order counts');
+        return {
+          success: false,
+          message: 'Firestore not available',
+          fallback: true,
+          data: {
+            unshipped: 0,
+            shipped: 0
+          }
+        };
+      }
+
+      const countsRef = this.db.collection('order_counts').doc('current');
+      const doc = await countsRef.get();
+
+      if (!doc.exists) {
+        console.log('No order counts found in Firebase');
+        return {
+          success: true,
+          message: 'No counts found',
+          data: {
+            unshipped: 0,
+            shipped: 0
+          }
+        };
+      }
+
+      const data = doc.data();
+      console.log(`Order counts retrieved from Firebase: Unshipped: ${data.unshipped}, Shipped: ${data.shipped}`);
+      
+      return {
+        success: true,
+        data: {
+          unshipped: data.unshipped || 0,
+          shipped: data.shipped || 0,
+          timestamp: data.timestamp
+        }
+      };
+
+    } catch (error) {
+      console.error('Error getting order counts:', error.message);
+      return {
+        success: false,
+        message: error.message,
+        fallback: true,
+        data: {
+          unshipped: 0,
+          shipped: 0
+        }
+      };
+    }
+  }
 }
 
 module.exports = new FirestoreService();

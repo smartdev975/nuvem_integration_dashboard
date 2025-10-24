@@ -67,6 +67,7 @@
     "attentionOrders": "Orders Needing Attention",
     "recentOrders": "Recent Orders",
     "searchPlaceholder": "Search by order ID or customer name...",
+    "search": "Search",
     "filterByStatus": "Filter by Status",
     "showOverdueOnly": "Show Overdue Only",
     "noOrdersFound": "No orders found",
@@ -156,8 +157,8 @@
   },
   "status": {
     "unpacked": "Unpacked",
-    "unshipped": "Unshipped", 
-    "shipped": "Shipped"
+    "unshipped": "Ready To Pack", 
+    "shipped": "Sent"
   },
   "pagination": {
     "previous": "Previous",

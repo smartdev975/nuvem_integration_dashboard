@@ -137,6 +137,120 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/orders/counts
+ * Get total counts of unshipped and shipped orders
+ */
+router.get('/counts', async (req, res) => {
+  try {
+    console.log('Fetching order counts...');
+    
+    // Get unshipped orders count
+    const unshippedResult = await nuvemshopService.fetchOrders(1, 1, 'unshipped');
+    const unshippedCount = unshippedResult.totalCount || 0;
+    
+    // Get shipped orders count  
+    const shippedResult = await nuvemshopService.fetchOrders(1, 1, 'shipped');
+    const shippedCount = shippedResult.totalCount || 0;
+    
+    console.log(`Order counts - Unshipped: ${unshippedCount}, Shipped: ${shippedCount}`);
+    
+    // Save counts to Firebase
+    const counts = { unshipped: unshippedCount, shipped: shippedCount };
+    const saveResult = await firestoreService.saveOrderCounts(counts);
+    
+    if (!saveResult.success) {
+      console.warn('Failed to save counts to Firebase:', saveResult.message);
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        unshipped: unshippedCount,
+        shipped: shippedCount,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching order counts:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order counts',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/orders/counts/stored
+ * Get stored order counts from Firebase
+ */
+router.get('/counts/stored', async (req, res) => {
+  try {
+    console.log('Fetching stored order counts from Firebase...');
+    
+    const result = await firestoreService.getOrderCounts();
+    
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch stored counts',
+        error: result.message
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.data,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error fetching stored order counts:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch stored counts',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/orders/attention
+ * Returns a list of orders marked as "needs attention"
+ */
+router.get('/attention', async (req, res) => {
+  try {
+    console.log('Fetching orders needing attention...');
+    
+    const result = await firestoreService.getOrdersNeedingAttention();
+    
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch attention orders',
+        error: result.message
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.data,
+      count: result.data.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error fetching attention orders:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch attention orders',
+      error: error.message
+    });
+  }
+});
+
+/**
  * GET /api/orders/:id
  * Returns a single order by ID with all available details
  */
@@ -264,32 +378,6 @@ router.get('/:id/note', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch note',
-      message: error.message
-    });
-  }
-});
-
-/**
- * GET /api/orders/attention
- * Returns a list of orders marked as "needs attention"
- */
-router.get('/attention', async (req, res) => {
-  try {
-    console.log('Fetching orders needing attention...');
-    
-    const result = await firestoreService.getOrdersNeedingAttention();
-
-    res.json({
-      success: true,
-      data: result,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Error fetching orders needing attention:', error.message);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch orders needing attention',
       message: error.message
     });
   }

@@ -33,10 +33,11 @@ const Index = () => {
   const [itemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [storedCounts, setStoredCounts] = useState({ unshipped: 0, shipped: 0 });
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  const stats = getOrderStats(orders);
+  const stats = getOrderStats(orders, totalCount, storedCounts);
 
   // Fetch orders from backend
   const fetchOrders = async (page: number = currentPage) => {
@@ -92,6 +93,34 @@ const Index = () => {
       // Fallback to mock data if backend is not available
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Fetch stored counts from Firebase
+  const fetchStoredCounts = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/counts/stored`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch stored counts: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setStoredCounts({
+          unshipped: data.data.unshipped || 0,
+          shipped: data.data.shipped || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stored counts:', error);
     }
   };
 
@@ -197,15 +226,16 @@ const Index = () => {
   // Display orders from backend (already paginated and filtered by backend)
   const displayedOrders = orders;
 
-  // Reset to first page and fetch data when filters change
+  // Reset to first page and fetch data when filters change (except search term)
   useEffect(() => {
     setCurrentPage(1);
     fetchOrders(1);
-  }, [searchTerm, statusFilter, overdueOnly, activeTab]);
+  }, [statusFilter, overdueOnly, activeTab]);
 
   useEffect(() => {
-    // Fetch orders on component mount
+    // Fetch orders and stored counts on component mount
     fetchOrders();
+    fetchStoredCounts();
 
       // Auto-refresh every 15 minutes
       const interval = setInterval(() => {
@@ -271,6 +301,7 @@ const Index = () => {
             <FilterBar
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
+              onSearch={() => fetchOrders(1)}
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
               overdueOnly={overdueOnly}

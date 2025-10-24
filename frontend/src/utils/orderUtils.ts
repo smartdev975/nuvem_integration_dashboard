@@ -99,15 +99,19 @@ export const filterOrders = (
   });
 };
 
-export const getOrderStats = (orders: Order[]) => {
-  const unpackedOrders = orders.filter((o) => o.status === "unpacked");
-  const shippedOrders = orders.filter((o) => o.status === "shipped");
+export const getOrderStats = (orders: Order[], totalCount?: number, storedCounts?: { unshipped: number; shipped: number }) => {
+  const unpackedOrders = orders.filter((o) => o.shipping_status === "unpacked");
+  const unshippedOrders = orders.filter((o) => o.shipping_status === "unshipped");
+  const shippedOrders = orders.filter((o) => o.shipping_status === "shipped");
   const delayedOrders = orders.filter((o) => isOrderDelayed(o));
   const attentionOrders = orders.filter((o) => o.attention);
 
   return {
-    totalReadyToPack: unpackedOrders.length,
-    totalSent: shippedOrders.length,
+    totalOrders: totalCount || orders.length, // Use totalCount if provided, otherwise fallback to current page count
+    totalUnpacked: unpackedOrders.length,
+    totalUnshipped: storedCounts?.unshipped || unshippedOrders.length, // Use stored count if available
+    totalReadyToPack: storedCounts?.unshipped || unshippedOrders.length, // Map unshipped to ready_to_pack for compatibility
+    totalSent: storedCounts?.shipped || shippedOrders.length, // Use stored count if available
     totalDelayed: delayedOrders.length,
     totalAttention: attentionOrders.length,
     lastUpdated: new Date().toLocaleTimeString(),
