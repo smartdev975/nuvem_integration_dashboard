@@ -49,10 +49,10 @@ export const FilterBar = ({
           <SelectValue placeholder={t('dashboard.filterByStatus')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t('dashboard.filterByStatus')}</SelectItem>
-          <SelectItem value="open">{t('status.open')}</SelectItem>
-          <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
-          <SelectItem value="closed">{t('status.closed')}</SelectItem>
+          <SelectItem value="any">{t('dashboard.filterByStatus')}</SelectItem>
+          <SelectItem value="unpacked">{t('status.unpacked')}</SelectItem>
+          <SelectItem value="unshipped">{t('status.unshipped')}</SelectItem>
+          <SelectItem value="shipped">{t('status.shipped')}</SelectItem>
         </SelectContent>
       </Select>
 

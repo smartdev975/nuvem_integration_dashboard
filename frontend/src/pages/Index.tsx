@@ -25,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("any");
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +51,7 @@ const Index = () => {
         page: page.toString(),
         per_page: itemsPerPage.toString(),
         search: searchTerm,
-        status: statusFilter,
+        shipping_status: statusFilter,
         overdue_only: overdueOnly.toString(),
         attention_only: (activeTab === 'attention').toString()
       });

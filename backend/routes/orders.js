@@ -31,13 +31,13 @@ router.get('/', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.per_page) || 50;
     const searchTerm = req.query.search || '';
-    const statusFilter = req.query.status || 'all';
+    const statusFilter = req.query.shipping_status || 'any';
     const overdueOnly = req.query.overdue_only === 'true';
     const attentionOnly = req.query.attention_only === 'true';
     
-    console.log(`Fetching orders - Page: ${page}, Per Page: ${perPage}, Search: "${searchTerm}", Status: ${statusFilter}, Overdue: ${overdueOnly}, Attention: ${attentionOnly}`);
+    console.log(`Fetching orders - Page: ${page}, Per Page: ${perPage}, Search: "${searchTerm}", Shipping Status: ${statusFilter}, Overdue: ${overdueOnly}, Attention: ${attentionOnly}`);
     
-    // Fetch paginated orders from Nuvemshop with status filter
+    // Fetch paginated orders from Nuvemshop with SHipping Status filter
     const result = await nuvemshopService.fetchOrders(page, perPage, statusFilter);
     
     // Get notes for all orders to merge with order data
@@ -81,7 +81,7 @@ router.get('/', async (req, res) => {
     // Apply overdue filter
     if (overdueOnly) {
       filteredOrders = filteredOrders.filter(order => {
-        if (order.status !== "ready_to_pack") return false;
+        if (order.shipping_status !== "unpacked") return false;
         const orderDate = new Date(order.order_date);
         const today = new Date();
         const businessDaysSinceOrder = calculateBusinessDays(orderDate, today);
@@ -97,8 +97,8 @@ router.get('/', async (req, res) => {
     // Sort orders (overdue first, then attention, then by date)
     filteredOrders.sort((a, b) => {
       // First priority: Overdue orders
-      const aOverdue = a.status === "ready_to_pack" && calculateBusinessDays(new Date(a.order_date), new Date()) > 2;
-      const bOverdue = b.status === "ready_to_pack" && calculateBusinessDays(new Date(b.order_date), new Date()) > 2;
+      const aOverdue = a.shipping_status === "unpacked" && calculateBusinessDays(new Date(a.order_date), new Date()) > 4;
+      const bOverdue = b.shipping_status === "unpacked" && calculateBusinessDays(new Date(b.order_date), new Date()) > 4;
       
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;

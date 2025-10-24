@@ -19,7 +19,7 @@ export const calculateBusinessDays = (startDate: Date, endDate: Date): number =>
 
 // Check if an order is overdue based on business days
 export const isOrderOverdue = (order: Order): boolean => {
-  if (order.status !== "ready_to_pack") return false;
+  if (order.shipping_status !== "unpacked") return false;
   
   const orderDate = new Date(order.order_date);
   const today = new Date();
@@ -33,7 +33,7 @@ export const isOrderOverdue = (order: Order): boolean => {
 
 // Calculate how many business days overdue an order is
 export const calculateOverdueDays = (order: Order): number => {
-  if (order.status !== "ready_to_pack") return 0;
+  if (order.shipping_status !== "unpacked") return 0;
   
   const orderDate = new Date(order.order_date);
   const today = new Date();
@@ -44,7 +44,7 @@ export const calculateOverdueDays = (order: Order): number => {
 };
 
 export const calculateDaysInDelay = (orderDate: string, status: string): number => {
-  if (status !== "ready_to_pack") return 0;
+  if (status !== "unpacked") return 0;
   
   const order = new Date(orderDate);
   const today = new Date();
@@ -91,7 +91,7 @@ export const filterOrders = (
       String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    const matchesStatus = statusFilter === "any" || order.shipping_status === statusFilter;
 
     const matchesOverdue = !overdueOnly || isOrderDelayed(order);
 
@@ -100,14 +100,14 @@ export const filterOrders = (
 };
 
 export const getOrderStats = (orders: Order[]) => {
-  const readyToPackOrders = orders.filter((o) => o.status === "ready_to_pack");
-  const sentOrders = orders.filter((o) => o.status === "sent");
+  const unpackedOrders = orders.filter((o) => o.status === "unpacked");
+  const shippedOrders = orders.filter((o) => o.status === "shipped");
   const delayedOrders = orders.filter((o) => isOrderDelayed(o));
   const attentionOrders = orders.filter((o) => o.attention);
 
   return {
-    totalReadyToPack: readyToPackOrders.length,
-    totalSent: sentOrders.length,
+    totalReadyToPack: unpackedOrders.length,
+    totalSent: shippedOrders.length,
     totalDelayed: delayedOrders.length,
     totalAttention: attentionOrders.length,
     lastUpdated: new Date().toLocaleTimeString(),

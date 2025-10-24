@@ -98,13 +98,13 @@ export const OrderCard = ({ order, onUpdateNote, onDeleteNote, onToggleAttention
               {t('orders.status')}
             </label>
             <Badge
-              variant={order.status === "sent" ? "secondary" : "default"}
+              variant={order.shipping_status === "shipped" ? "secondary" : "default"}
               className={cn(
-                order.status === "ready_to_pack" && "bg-primary/10 text-primary hover:bg-primary/20",
+                order.shipping_status === "unpacked" && "bg-primary/10 text-primary hover:bg-primary/20",
                 "text-xs mt-1"
               )}
             >
-              {t(`status.${order.status}`)}
+              {t(`status.${order.shipping_status}`)}
             </Badge>
           </div>
         </div>

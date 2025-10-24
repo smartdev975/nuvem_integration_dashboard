@@ -1,9 +1,10 @@
 export interface Order {
   id: string | number;
+  shipping_status: "unpacked" | "unshipped" | "shipped";
   number: number;
   customer_name: string;
   order_date: string;
-  status: "open" | "ready_to_pack" | "sent" | "delivered" | "cancelled" | "closed";
+  status: "unpacked" | "unshipped" | "shipped";
   days_in_ready_to_pack: number;
   is_delayed: boolean;
   note: string | null;

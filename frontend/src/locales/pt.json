@@ -155,12 +155,9 @@
     "user": "Usuário"
   },
   "status": {
-    "open": "Aberto",
-    "ready_to_pack": "Pronto para Embalar",
-    "sent": "Enviado",
-    "delivered": "Entregue",
-    "cancelled": "Cancelado",
-    "closed": "Fechado"
+    "unpacked": "Não Embalado",
+    "unshipped": "Não Enviado",
+    "shipped": "Enviado"
   },
   "pagination": {
     "previous": "Anterior",

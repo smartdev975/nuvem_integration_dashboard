@@ -180,9 +180,9 @@ const IntegrationTest: React.FC = () => {
                         <div className="flex justify-between items-start">
                           <span className="font-medium">#{order.id}</span>
                           <span className={`text-xs px-2 py-1 rounded ${
-                            order.status === 'ready_to_pack' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                            order.shipping_status === 'shipped' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                           }`}>
-                            {order.status}
+                            {order.shipping_status}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600">{order.customer_name}</p>

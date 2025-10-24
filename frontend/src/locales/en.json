@@ -155,12 +155,9 @@
     "user": "User"
   },
   "status": {
-    "open": "Open",
-    "ready_to_pack": "Ready to Pack",
-    "sent": "Sent",
-    "delivered": "Delivered",
-    "cancelled": "Cancelled",
-    "closed": "Closed"
+    "unpacked": "Unpacked",
+    "unshipped": "Unshipped", 
+    "shipped": "Shipped"
   },
   "pagination": {
     "previous": "Previous",

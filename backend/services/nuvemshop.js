@@ -14,6 +14,7 @@ class NuvemshopService {
   getHeaders() {
     return {
       'Authentication': `bearer ${this.accessToken}`,
+      'x-api-key': process.env.NUVEMSHOP_API_KEY || '',
       'Content-Type': 'application/json'
     };
   }
@@ -48,23 +49,31 @@ class NuvemshopService {
   /**
    * Fetch orders from Nuvemshop API with pagination and filtering support
    */
-  async fetchOrders(page = 1, perPage = 50, status = null) {
-    const cacheKey = `orders_page_${page}_per_${perPage}_${status || ''}`;
+  async fetchOrders(page = 1, perPage = 50, shipping_status = null) {
+    const cacheKey = `orders_page_${page}_per_${perPage}_${shipping_status || ''}`;
     
     try {
       const cachedData = this.getCache(cacheKey);
       
       if (cachedData) {
-        console.log(`Returning cached orders for page: ${page}, per_page: ${perPage}, status: ${status || 'all'}`);
+        console.log(`Returning cached orders for page: ${page}, per_page: ${perPage}, shipping_status: ${shipping_status || ''}`);
         return cachedData;
       }
 
-      // Build URL with pagination and filtering parameters
+      // Build URL with pagination parameters (always fetch all orders)
       let url = `${this.baseUrl}/orders?page=${page}&per_page=${perPage}`;
       
-      // Add status filter if specified
-      if (status && status !== '') {
-        url += `&status=${status}`;
+      // Add shipping_status filter if specified
+      if (shipping_status && shipping_status !== '' && shipping_status !== 'any') {
+        if (shipping_status === 'unshipped') {
+          url += `&shipping_status=unfulfilled`;
+        } else if (shipping_status === 'shipped') {
+          url += `&shipping_status=fulfilled`;
+        } else if (shipping_status === 'unpacked') {
+          url += `&shipping_status=unpacked`;
+        } 
+      } else {
+        url += `&shipping_status=any`;
       }
       
       console.log(`Fetching from Nuvemshop API: ${url}`);
@@ -94,15 +103,18 @@ class NuvemshopService {
       console.log(`Nuvemshop API response - Total count: ${totalCount}, Total pages: ${totalPages}, Current page: ${page}`);
       
       // Process orders to add computed fields
-      const processedOrders = orders.map(order => {
+      let processedOrders = orders.map(order => {
         const processed = this.processOrder(order);
         return processed;
       });
       
+      // Note: No need for post-processing filter since we filter at API level
+      // The API already returns the correct orders based on Nuvemshop's status mapping
+      
       const result = {
         orders: processedOrders,
-        totalCount: totalCount,
-        totalPages: totalPages,
+        totalCount: totalCount, // Use original API count
+        totalPages: totalPages,  // Use original API pages
         currentPage: page,
         perPage: perPage
       };
@@ -191,15 +203,15 @@ class NuvemshopService {
       id: order.id,
       customer_name: this.getCustomerName(order),
       order_date: order.created_at,
-      status: mappedStatus,
+      shipping_status: mappedStatus,
       days_in_ready_to_pack: 0,
       is_delayed: false,
       // Include all original order data
       ...order
     };
 
-    // Calculate days in ready_to_pack status
-    if (mappedStatus === 'ready_to_pack' && order.created_at) {
+    // Calculate days in unpacked status
+    if (mappedStatus === 'unpacked' && order.created_at) {
       const orderDate = new Date(order.created_at);
       const now = new Date();
       const daysDiff = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24));
@@ -212,27 +224,26 @@ class NuvemshopService {
   }
 
   /**
-   * Map Nuvemshop API status to our expected status
+   * Map Nuvemshop API status to our expected shipping status
    */
   mapOrderStatus(order) {
     // Nuvemshop API uses different status fields
+    const shippingStatus = order.shipping_status; // "unfulfilled", "fulfilled", "unpacked"
     const mainStatus = order.status; // "open", "closed", "cancelled"
-    const shippingStatus = order.shipping_status; // "unpacked", "packed", "shipped", "delivered"
-    const nextAction = order.next_action; // "waiting_packing", "waiting_shipment", etc.
 
-    // Map to our expected statuses
-    if (mainStatus === 'open') {
-      if (shippingStatus === 'unpacked' || nextAction === 'waiting_packing') {
-        return 'ready_to_pack';
-      } else if (shippingStatus === 'packed' || nextAction === 'waiting_shipment') {
-        return 'sent';
-      } else if (shippingStatus === 'shipped') {
-        return 'sent';
-      }
+    // console.log(`Mapping order ${order.id}: shippingStatus=${shippingStatus}, mainStatus=${mainStatus}`);
+
+    // Map Nuvemshop's special statuses to our values
+    if (shippingStatus === 'unfulfilled') {
+      return 'unshipped';
+    } else if (shippingStatus === 'fulfilled') {
+      return 'shipped';
+    } else if (shippingStatus === 'unpacked') {
+      return 'unpacked';
     }
 
-    // Default fallback
-    return mainStatus;
+    // Default fallback - return shipping status if available, otherwise main status
+    return shippingStatus || mainStatus;
   }
 
   /**
