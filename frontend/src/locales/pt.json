@@ -73,7 +73,9 @@
     "noOrdersFound": "Nenhum pedido encontrado",
     "loadingOrders": "Carregando pedidos...",
     "refreshOrders": "Atualizar Pedidos",
-    "lastUpdated": "Última Atualização"
+    "lastUpdated": "Última Atualização",
+    "readyToPack": "Pronto para Embalar",
+    "sent": "Enviado"
   },
   "orders": {
     "orderId": "ID do Pedido",

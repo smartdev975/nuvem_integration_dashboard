@@ -73,7 +73,9 @@
     "noOrdersFound": "No orders found",
     "loadingOrders": "Loading orders...",
     "refreshOrders": "Refresh Orders",
-    "lastUpdated": "Last Updated"
+    "lastUpdated": "Last Updated",
+    "readyToPack": "Ready To Pack",
+    "sent": "Sent"
   },
   "orders": {
     "orderId": "Order ID",

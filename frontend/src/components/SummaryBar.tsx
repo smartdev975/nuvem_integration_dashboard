@@ -30,7 +30,7 @@ export const SummaryBar = ({ stats }: SummaryBarProps) => {
             <Package className="h-4 w-4 md:h-5 md:w-5 text-accent-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs md:text-sm text-muted-foreground">{t('status.unshipped')}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">{t('dashboard.readyToPack')}</p>
             <p className="text-lg md:text-2xl font-semibold text-foreground">{stats.totalReadyToPack}</p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export const SummaryBar = ({ stats }: SummaryBarProps) => {
             <Truck className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs md:text-sm text-muted-foreground">{t('status.shipped')}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">{t('dashboard.sent')}</p>
             <p className="text-lg md:text-2xl font-semibold text-foreground">{stats.totalSent}</p>
           </div>
         </div>
