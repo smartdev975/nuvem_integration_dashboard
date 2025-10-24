@@ -3,6 +3,35 @@ const router = express.Router();
 const nuvemshopService = require('../services/nuvemshop');
 const firestoreService = require('../services/firestore');
 
+// Helper function to update counts in Firebase (non-blocking)
+const updateCountsInFirebase = async () => {
+  try {
+    console.log('Updating counts in Firebase...');
+    
+    // Get unshipped orders count
+    const unshippedResult = await nuvemshopService.fetchOrders(1, 1, 'unshipped');
+    const unshippedCount = unshippedResult.totalCount || 0;
+    
+    // Get shipped orders count  
+    const shippedResult = await nuvemshopService.fetchOrders(1, 1, 'shipped');
+    const shippedCount = shippedResult.totalCount || 0;
+    
+    console.log(`Updating Firebase counts - Unshipped: ${unshippedCount}, Shipped: ${shippedCount}`);
+    
+    // Save counts to Firebase (non-blocking)
+    const counts = { unshipped: unshippedCount, shipped: shippedCount };
+    const saveResult = await firestoreService.saveOrderCounts(counts);
+    
+    if (!saveResult.success) {
+      console.warn('Failed to save counts to Firebase (non-critical):', saveResult.message);
+    } else {
+      console.log('Counts updated in Firebase successfully');
+    }
+  } catch (error) {
+    console.warn('Error updating counts in Firebase (non-critical):', error.message);
+  }
+};
+
 // Helper function to calculate business days between two dates
 const calculateBusinessDays = (startDate, endDate) => {
   let count = 0;
@@ -115,6 +144,11 @@ router.get('/', async (req, res) => {
       return bDate.getTime() - aDate.getTime();
     });
 
+    // Update counts in Firebase (non-blocking - don't wait for completion)
+    updateCountsInFirebase().catch(error => {
+      console.warn('Background counts update failed (non-critical):', error.message);
+    });
+
     res.json({
       success: true,
       data: filteredOrders,
@@ -154,13 +188,10 @@ router.get('/counts', async (req, res) => {
     
     console.log(`Order counts - Unshipped: ${unshippedCount}, Shipped: ${shippedCount}`);
     
-    // Save counts to Firebase
-    const counts = { unshipped: unshippedCount, shipped: shippedCount };
-    const saveResult = await firestoreService.saveOrderCounts(counts);
-    
-    if (!saveResult.success) {
-      console.warn('Failed to save counts to Firebase:', saveResult.message);
-    }
+    // Update counts in Firebase (non-blocking)
+    updateCountsInFirebase().catch(error => {
+      console.warn('Background counts update failed (non-critical):', error.message);
+    });
     
     res.json({
       success: true,
@@ -189,21 +220,55 @@ router.get('/counts/stored', async (req, res) => {
   try {
     console.log('Fetching stored order counts from Firebase...');
     
-    const result = await firestoreService.getOrderCounts();
-    
-    if (!result.success) {
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch stored counts',
-        error: result.message
+    try {
+      const result = await firestoreService.getOrderCounts();
+      
+      if (!result.success) {
+        console.warn('Firebase not available, returning fallback counts');
+        // Return fallback counts from first page
+        const fallbackResult = await nuvemshopService.fetchOrders(1, 50, 'any');
+        const fallbackOrders = fallbackResult.orders || [];
+        
+        const unshippedCount = fallbackOrders.filter(o => o.shipping_status === 'unshipped').length;
+        const shippedCount = fallbackOrders.filter(o => o.shipping_status === 'shipped').length;
+        
+        return res.json({
+          success: true,
+          data: {
+            unshipped: unshippedCount,
+            shipped: shippedCount,
+            timestamp: new Date().toISOString(),
+            fallback: true
+          }
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: result.data,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (firebaseError) {
+      console.warn('Firebase error, returning fallback counts:', firebaseError.message);
+      
+      // Return fallback counts from first page
+      const fallbackResult = await nuvemshopService.fetchOrders(1, 50, 'any');
+      const fallbackOrders = fallbackResult.orders || [];
+      
+      const unshippedCount = fallbackOrders.filter(o => o.shipping_status === 'unshipped').length;
+      const shippedCount = fallbackOrders.filter(o => o.shipping_status === 'shipped').length;
+      
+      res.json({
+        success: true,
+        data: {
+          unshipped: unshippedCount,
+          shipped: shippedCount,
+          timestamp: new Date().toISOString(),
+          fallback: true
+        }
       });
     }
-    
-    res.json({
-      success: true,
-      data: result.data,
-      timestamp: new Date().toISOString()
-    });
 
   } catch (error) {
     console.error('Error fetching stored order counts:', error.message);
@@ -332,6 +397,11 @@ router.post('/:id/note', async (req, res) => {
       attention: Boolean(attention)
     });
 
+    // Update counts in Firebase (non-blocking)
+    updateCountsInFirebase().catch(error => {
+      console.warn('Background counts update failed (non-critical):', error.message);
+    });
+
     res.json({
       success: true,
       data: result,
@@ -401,6 +471,11 @@ router.delete('/:id/note', async (req, res) => {
     console.log(`Deleting note for order ${orderId}...`);
     
     const result = await firestoreService.deleteOrderNote(orderId);
+
+    // Update counts in Firebase (non-blocking)
+    updateCountsInFirebase().catch(error => {
+      console.warn('Background counts update failed (non-critical):', error.message);
+    });
 
     res.json({
       success: true,

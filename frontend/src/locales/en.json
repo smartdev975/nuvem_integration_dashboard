@@ -157,8 +157,8 @@
   },
   "status": {
     "unpacked": "Unpacked",
-    "unshipped": "Ready To Pack", 
-    "shipped": "Sent"
+    "unshipped": "Unshipped", 
+    "shipped": "Shipped"
   },
   "pagination": {
     "previous": "Previous",

@@ -96,7 +96,7 @@ const Index = () => {
     }
   };
 
-  // Fetch stored counts from Firebase
+  // Fetch stored counts from Firebase (with fallback to first page counts)
   const fetchStoredCounts = async () => {
     try {
       const token = localStorage.getItem('auth_token');
@@ -118,9 +118,17 @@ const Index = () => {
           unshipped: data.data.unshipped || 0,
           shipped: data.data.shipped || 0
         });
+        
+        // Log if using fallback counts
+        if (data.data.fallback) {
+          console.log('Using fallback counts from first page (Firebase not available)');
+        } else {
+          console.log('Using Firebase stored counts');
+        }
       }
     } catch (error) {
       console.error('Error fetching stored counts:', error);
+      // Don't set any counts on error - let the system use page counts
     }
   };
 

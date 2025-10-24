@@ -157,7 +157,7 @@
   },
   "status": {
     "unpacked": "Não Embalado",
-    "unshipped": "Pronto para Embalar",
+    "unshipped": "Não Enviado",
     "shipped": "Enviado"
   },
   "pagination": {

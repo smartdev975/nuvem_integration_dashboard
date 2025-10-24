@@ -106,12 +106,16 @@ export const getOrderStats = (orders: Order[], totalCount?: number, storedCounts
   const delayedOrders = orders.filter((o) => isOrderDelayed(o));
   const attentionOrders = orders.filter((o) => o.attention);
 
+  // Use stored counts if available, otherwise use current page counts
+  const unshippedCount = storedCounts?.unshipped ?? unshippedOrders.length;
+  const shippedCount = storedCounts?.shipped ?? shippedOrders.length;
+
   return {
     totalOrders: totalCount || orders.length, // Use totalCount if provided, otherwise fallback to current page count
     totalUnpacked: unpackedOrders.length,
-    totalUnshipped: storedCounts?.unshipped || unshippedOrders.length, // Use stored count if available
-    totalReadyToPack: storedCounts?.unshipped || unshippedOrders.length, // Map unshipped to ready_to_pack for compatibility
-    totalSent: storedCounts?.shipped || shippedOrders.length, // Use stored count if available
+    totalUnshipped: unshippedCount,
+    totalReadyToPack: unshippedCount, // Map unshipped to ready_to_pack for compatibility
+    totalSent: shippedCount,
     totalDelayed: delayedOrders.length,
     totalAttention: attentionOrders.length,
     lastUpdated: new Date().toLocaleTimeString(),
