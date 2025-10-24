@@ -159,7 +159,8 @@
     "ready_to_pack": "Ready to Pack",
     "sent": "Sent",
     "delivered": "Delivered",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "closed": "Closed"
   },
   "pagination": {
     "previous": "Previous",

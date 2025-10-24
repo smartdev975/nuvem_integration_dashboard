@@ -159,7 +159,8 @@
     "ready_to_pack": "Pronto para Embalar",
     "sent": "Enviado",
     "delivered": "Entregue",
-    "cancelled": "Cancelado"
+    "cancelled": "Cancelado",
+    "closed": "Fechado"
   },
   "pagination": {
     "previous": "Anterior",

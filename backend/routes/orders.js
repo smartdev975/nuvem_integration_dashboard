@@ -37,8 +37,8 @@ router.get('/', async (req, res) => {
     
     console.log(`Fetching orders - Page: ${page}, Per Page: ${perPage}, Search: "${searchTerm}", Status: ${statusFilter}, Overdue: ${overdueOnly}, Attention: ${attentionOnly}`);
     
-    // Fetch paginated orders from Nuvemshop
-    const result = await nuvemshopService.fetchOrders(page, perPage);
+    // Fetch paginated orders from Nuvemshop with status filter
+    const result = await nuvemshopService.fetchOrders(page, perPage, statusFilter);
     
     // Get notes for all orders to merge with order data
     const ordersWithNotes = await Promise.all(
@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
       })
     );
 
-    // Apply client-side filtering and sorting (since Nuvemshop API doesn't support all filters)
+    // Apply client-side filtering and sorting (search, overdue, attention filters)
     let filteredOrders = ordersWithNotes;
     
     // Apply search filter
@@ -76,11 +76,6 @@ router.get('/', async (req, res) => {
         String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-    
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
     }
     
     // Apply overdue filter

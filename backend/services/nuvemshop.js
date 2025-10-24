@@ -46,10 +46,10 @@ class NuvemshopService {
   }
 
   /**
-   * Fetch orders from Nuvemshop API with pagination support
+   * Fetch orders from Nuvemshop API with pagination and filtering support
    */
   async fetchOrders(page = 1, perPage = 50, status = null) {
-    const cacheKey = `orders_page_${page}_per_${perPage}_${status || 'all'}`;
+    const cacheKey = `orders_page_${page}_per_${perPage}_${status || ''}`;
     
     try {
       const cachedData = this.getCache(cacheKey);
@@ -59,8 +59,14 @@ class NuvemshopService {
         return cachedData;
       }
 
-      // Use real Nuvemshop API with pagination
-      const url = `${this.baseUrl}/orders?page=${page}&per_page=${perPage}`;
+      // Build URL with pagination and filtering parameters
+      let url = `${this.baseUrl}/orders?page=${page}&per_page=${perPage}`;
+      
+      // Add status filter if specified
+      if (status && status !== '') {
+        url += `&status=${status}`;
+      }
+      
       console.log(`Fetching from Nuvemshop API: ${url}`);
       
       const response = await fetch(url, {
@@ -93,16 +99,8 @@ class NuvemshopService {
         return processed;
       });
       
-      // Filter by status if specified (since Nuvemshop API doesn't support status filtering)
-      let filteredOrders = processedOrders;
-      if (status) {
-        filteredOrders = processedOrders.filter(order => order.status === status);
-        console.log(`Filtered ${filteredOrders.length} orders with status: ${status}`);
-        console.log('Available statuses in processed orders:', [...new Set(processedOrders.map(o => o.status))]);
-      }
-      
       const result = {
-        orders: filteredOrders,
+        orders: processedOrders,
         totalCount: totalCount,
         totalPages: totalPages,
         currentPage: page,

@@ -51,9 +51,8 @@ export const FilterBar = ({
         <SelectContent>
           <SelectItem value="all">{t('dashboard.filterByStatus')}</SelectItem>
           <SelectItem value="open">{t('status.open')}</SelectItem>
-          <SelectItem value="ready_to_pack">{t('status.ready_to_pack')}</SelectItem>
-          <SelectItem value="sent">{t('status.sent')}</SelectItem>
           <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
+          <SelectItem value="closed">{t('status.closed')}</SelectItem>
         </SelectContent>
       </Select>
 
