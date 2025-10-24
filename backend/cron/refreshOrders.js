@@ -63,24 +63,24 @@ class OrderRefreshScheduler {
 
       // Fetch fresh data from Nuvemshop API for both order statuses
       const [readyToPackOrders, sentOrders] = await Promise.all([
-        nuvemshopService.fetchOrders('ready_to_pack'),
-        nuvemshopService.fetchOrders('sent')
+        nuvemshopService.fetchOrders(1, 50, 'ready_to_pack'),
+        nuvemshopService.fetchOrders(1, 50, 'sent')
       ]);
 
-      const totalOrders = readyToPackOrders.length + sentOrders.length;
+      const totalOrders = readyToPackOrders.orders.length + sentOrders.orders.length;
       const duration = Date.now() - startTime;
 
       this.lastRefresh = new Date();
       
       console.log(`Order refresh completed successfully (real Nuvemshop API):`);
-      console.log(`- Ready to pack orders: ${readyToPackOrders.length}`);
-      console.log(`- Sent orders: ${sentOrders.length}`);
+      console.log(`- Ready to pack orders: ${readyToPackOrders.orders.length}`);
+      console.log(`- Sent orders: ${sentOrders.orders.length}`);
       console.log(`- Total orders: ${totalOrders}`);
       console.log(`- Duration: ${duration}ms`);
       console.log(`- Next refresh in: ${this.refreshInterval} minutes`);
 
       // Log any delayed orders
-      const delayedOrders = readyToPackOrders.filter(order => order.is_delayed);
+      const delayedOrders = readyToPackOrders.orders.filter(order => order.is_delayed);
       if (delayedOrders.length > 0) {
         console.log(`⚠️  Found ${delayedOrders.length} delayed orders:`);
         delayedOrders.forEach(order => {

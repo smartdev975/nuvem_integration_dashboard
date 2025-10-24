@@ -46,43 +46,53 @@ class NuvemshopService {
   }
 
   /**
-   * Fetch orders from Nuvemshop API (currently using mock data)
+   * Fetch orders from Nuvemshop API with pagination support
    */
-  async fetchOrders(status = null) {
-    const cacheKey = `orders_${status || 'all'}`;
+  async fetchOrders(page = 1, perPage = 50, status = null) {
+    const cacheKey = `orders_page_${page}_per_${perPage}_${status || 'all'}`;
     
     try {
       const cachedData = this.getCache(cacheKey);
       
       if (cachedData) {
-        console.log(`Returning cached orders for status: ${status || 'all'}`);
+        console.log(`Returning cached orders for page: ${page}, per_page: ${perPage}, status: ${status || 'all'}`);
         return cachedData;
       }
 
-      // Use real Nuvemshop API
-      const url = `${this.baseUrl}/orders`;
+      // Use real Nuvemshop API with pagination
+      const url = `${this.baseUrl}/orders?page=${page}&per_page=${perPage}`;
+      console.log(`Fetching from Nuvemshop API: ${url}`);
+      
       const response = await fetch(url, {
         method: 'GET',
         headers: this.getHeaders()
       });
       
-      // if (!response.ok) {
-      //   if (response.status === 404) {
-      //     console.warn(`Nuvemshop API returned 404 for store ${process.env.STORE_ID}. This might indicate:`);
-      //     console.warn('- Invalid Store ID');
-      //     console.warn('- Missing or invalid Nuvemshop Token');
-      //     console.warn('- Store is inactive or doesn\'t exist');
-      //     console.warn('- API endpoint structure has changed');
-      //   }
-      //   throw new Error(`Nuvemshop API error: ${response.status} ${response.statusText}`);
-      // }
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn(`Nuvemshop API returned 404 for store ${process.env.STORE_ID}. This might indicate:`);
+          console.warn('- Invalid Store ID');
+          console.warn('- Missing or invalid Nuvemshop Token');
+          console.warn('- Store is inactive or doesn\'t exist');
+          console.warn('- API endpoint structure has changed');
+        }
+        throw new Error(`Nuvemshop API error: ${response.status} ${response.statusText}`);
+      }
 
       const orders = await response.json();
+      
+      // Get total count from x-total-count header
+      const totalCount = parseInt(response.headers.get('x-total-count')) || orders.length;
+      const totalPages = Math.ceil(totalCount / perPage);
+      
+      console.log(`Nuvemshop API response - Total count: ${totalCount}, Total pages: ${totalPages}, Current page: ${page}`);
+      
       // Process orders to add computed fields
       const processedOrders = orders.map(order => {
         const processed = this.processOrder(order);
         return processed;
       });
+      
       // Filter by status if specified (since Nuvemshop API doesn't support status filtering)
       let filteredOrders = processedOrders;
       if (status) {
@@ -91,21 +101,35 @@ class NuvemshopService {
         console.log('Available statuses in processed orders:', [...new Set(processedOrders.map(o => o.status))]);
       }
       
-      // Cache the results
-      this.setCache(cacheKey, filteredOrders);
+      const result = {
+        orders: filteredOrders,
+        totalCount: totalCount,
+        totalPages: totalPages,
+        currentPage: page,
+        perPage: perPage
+      };
       
-      return filteredOrders;
+      // Cache the results
+      this.setCache(cacheKey, result);
+      
+      return result;
 
     } catch (error) {
       console.error('Error fetching orders from Nuvemshop:', error.message);
       
-      // Return empty array when API fails (no mock data fallback)
-      console.warn('API failed, returning empty orders array');
-      const emptyOrders = [];
+      // Return empty result structure when API fails
+      console.warn('API failed, returning empty orders result');
+      const emptyResult = {
+        orders: [],
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: page,
+        perPage: perPage
+      };
       
       // Cache empty result for shorter duration
-      this.setCache(cacheKey, emptyOrders, 5); // 5 minutes cache for empty result
-      return emptyOrders;
+      this.setCache(cacheKey, emptyResult, 5); // 5 minutes cache for empty result
+      return emptyResult;
     }
   }
 

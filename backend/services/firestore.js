@@ -114,7 +114,7 @@ class FirestoreService {
       const noteDoc = await noteRef.get();
 
       if (!noteDoc.exists) {
-        console.log(`No note document found for order ${orderId}`);
+        // console.log(`No note document found for order ${orderId}`);
         return {
           success: true,
           orderId: orderId,
@@ -126,11 +126,11 @@ class FirestoreService {
 
       const noteData = noteDoc.data();
       
-      console.log(`Note retrieved for order ${orderId}:`, {
-        note: noteData.note,
-        attention: noteData.attention,
-        updatedAt: noteData.updatedAt
-      });
+      // console.log(`Note retrieved for order ${orderId}:`, {
+      //   note: noteData.note,
+      //   attention: noteData.attention,
+      //   updatedAt: noteData.updatedAt
+      // });
       return {
         success: true,
         orderId: orderId,

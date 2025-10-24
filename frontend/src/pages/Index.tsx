@@ -30,25 +30,41 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(50);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const { user } = useAuth();
   const { t } = useTranslation();
 
   const stats = getOrderStats(orders);
 
   // Fetch orders from backend
-  const fetchOrders = async () => {
+  const fetchOrders = async (page: number = currentPage) => {
     try {
       setIsLoading(true);
-      console.log('Fetching orders from backend...');
+      console.log(`Fetching orders from backend - Page: ${page}, Per Page: ${itemsPerPage}`);
       
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/orders', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: itemsPerPage.toString(),
+        search: searchTerm,
+        status: statusFilter,
+        overdue_only: overdueOnly.toString(),
+        attention_only: (activeTab === 'attention').toString()
       });
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/orders?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
@@ -59,6 +75,13 @@ const Index = () => {
       
       if (data.success && data.data) {
         setOrders(data.data);
+        // Update total pages and count if provided by backend
+        if (data.totalPages) {
+          setTotalPages(data.totalPages);
+        }
+        if (data.totalCount) {
+          setTotalCount(data.totalCount);
+        }
         toast.success(t('notifications.orderUpdated'));
       } else {
         throw new Error('Invalid response format');
@@ -168,34 +191,27 @@ const Index = () => {
   };
 
   const handleRefresh = async () => {
-    await fetchOrders();
+    await fetchOrders(currentPage);
   };
 
-  // Calculate filtered orders
-  const filteredOrders = activeTab === "attention"
-    ? sortOrders(orders.filter((o) => o.attention))
-    : sortOrders(filterOrders(orders, searchTerm, statusFilter, overdueOnly));
+  // Display orders from backend (already paginated and filtered by backend)
+  const displayedOrders = orders;
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const displayedOrders = filteredOrders.slice(startIndex, endIndex);
-
-  // Reset to first page when filters change
+  // Reset to first page and fetch data when filters change
   useEffect(() => {
     setCurrentPage(1);
+    fetchOrders(1);
   }, [searchTerm, statusFilter, overdueOnly, activeTab]);
 
   useEffect(() => {
     // Fetch orders on component mount
     fetchOrders();
 
-    // Auto-refresh every 15 minutes
-    const interval = setInterval(() => {
-      console.log("Auto-refreshing data...");
-      fetchOrders();
-    }, 15 * 60 * 1000);
+      // Auto-refresh every 15 minutes
+      const interval = setInterval(() => {
+        console.log("Auto-refreshing data...");
+        fetchOrders(currentPage);
+      }, 15 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -279,7 +295,9 @@ const Index = () => {
                         size="sm"
                         onClick={() => {
                           if (currentPage > 1) {
-                            setCurrentPage(currentPage - 1);
+                            const newPage = currentPage - 1;
+                            setCurrentPage(newPage);
+                            fetchOrders(newPage);
                           }
                         }}
                         disabled={currentPage <= 1}
@@ -324,6 +342,7 @@ const Index = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               setCurrentPage(page);
+                              fetchOrders(page);
                             }}
                             isActive={currentPage === page}
                             className="cursor-pointer"
@@ -340,7 +359,9 @@ const Index = () => {
                         size="sm"
                         onClick={() => {
                           if (currentPage < totalPages) {
-                            setCurrentPage(currentPage + 1);
+                            const newPage = currentPage + 1;
+                            setCurrentPage(newPage);
+                            fetchOrders(newPage);
                           }
                         }}
                         disabled={currentPage >= totalPages}
@@ -357,7 +378,7 @@ const Index = () => {
             
             {/* Pagination Info */}
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              {t('pagination.showing')} {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} {t('pagination.of')} {filteredOrders.length} {t('pagination.orders')}
+              {t('pagination.showing')} {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} {t('pagination.of')} {totalCount} {t('pagination.orders')}
             </div>
           </TabsContent>
 
@@ -380,7 +401,9 @@ const Index = () => {
                         size="sm"
                         onClick={() => {
                           if (currentPage > 1) {
-                            setCurrentPage(currentPage - 1);
+                            const newPage = currentPage - 1;
+                            setCurrentPage(newPage);
+                            fetchOrders(newPage);
                           }
                         }}
                         disabled={currentPage <= 1}
@@ -425,6 +448,7 @@ const Index = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               setCurrentPage(page);
+                              fetchOrders(page);
                             }}
                             isActive={currentPage === page}
                             className="cursor-pointer"
@@ -441,7 +465,9 @@ const Index = () => {
                         size="sm"
                         onClick={() => {
                           if (currentPage < totalPages) {
-                            setCurrentPage(currentPage + 1);
+                            const newPage = currentPage + 1;
+                            setCurrentPage(newPage);
+                            fetchOrders(newPage);
                           }
                         }}
                         disabled={currentPage >= totalPages}
@@ -458,7 +484,7 @@ const Index = () => {
             
             {/* Pagination Info */}
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              {t('pagination.showing')} {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} {t('pagination.of')} {filteredOrders.length} {t('pagination.orders')}
+              {t('pagination.showing')} {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} {t('pagination.of')} {totalCount} {t('pagination.orders')}
             </div>
           </TabsContent>
         </Tabs>

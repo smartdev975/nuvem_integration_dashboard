@@ -156,33 +156,7 @@ async function startServer() {
 
     // Start the server
     app.listen(PORT, () => {
-      // console.log('='.repeat(50));
-      // console.log('🚀 Nuvem Flow Backend Server Started');
-      // console.log('='.repeat(50));
-      // console.log(`📡 Server running on port ${PORT}`);
-      // console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      // console.log(`🏪 Store ID: ${process.env.STORE_ID} (using real Nuvemshop API)`);
-      // console.log(`🔥 Firebase Project: nuvem-flow`);
-      // console.log(`🔄 Auto-refresh: Every ${process.env.CACHE_DURATION || 15} minutes`);
-      // console.log(`📊 Data Source: Real Nuvemshop API`);
-      // console.log('='.repeat(50));
-      // console.log('Available endpoints:');
-      // console.log('  GET  /health - Health check');
-      // console.log('  GET  /api/status - API status');
-      // console.log('  POST /api/refresh - Manual refresh');
-      // console.log('  POST /api/auth/login - User login');
-      // console.log('  GET  /api/auth/verify - Verify token');
-      // console.log('  POST /api/auth/logout - User logout');
-      // console.log('  POST /api/auth/register - User registration');
-      // console.log('  GET  /api/firebase/test - Test Firebase connection');
-      // console.log('  GET  /api/firebase/notes - Get all notes');
-      // console.log('  POST /api/firebase/seed - Seed sample data');
-      // console.log('  GET  /api/orders - All orders');
-      // console.log('  GET  /api/orders/:id - Single order');
-      // console.log('  POST /api/orders/:id/note - Save note');
-      // console.log('  GET  /api/orders/:id/note - Get note');
-      // console.log('  GET  /api/orders/attention - Orders needing attention');
-      // console.log('='.repeat(50));
+      
     });
 
   } catch (error) {
